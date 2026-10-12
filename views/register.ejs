@@ -1,14 +1,26 @@
-<h1><%= title %></h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+</head>
+<body>
 
-<% if (errors.length) { %>
-  <ul><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul>
-<% } %>
+  <h1><%= title %></h1>
 
-<form method="POST" action="/register">
-      <input name="login" placeholder="Логин" required>
-      <input name="password" type="password" placeholder="Пароль" required>
-      <input name="fio" placeholder="ФИО" required>
-      <input name="phone" type="tel" placeholder="Номер телефона" required>
-      <input name="email" type="email" placeholder="Email" required>
-      <button>Создать пользователя</button>
-</form>
+  <% if (errors.length) { %>
+    <ul><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul>
+  <% } %>
+
+  <form method="POST" action="/register">
+        <input name="login" placeholder="Логин" required>
+        <input name="password" type="password" placeholder="Пароль" required>
+        <input name="fio" placeholder="ФИО" required>
+        <input name="phone" type="tel" placeholder="Номер телефона" required>
+        <input name="email" type="email" placeholder="Email" required>
+        <button>Создать пользователя</button>
+  </form>
+  
+</body>
+</html>

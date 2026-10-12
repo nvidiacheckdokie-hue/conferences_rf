@@ -28,16 +28,24 @@ kol.get("/login", (req, res) => {
 });
 
 kol.post("/login", (req, res) => {
-  const userLogin = req.body.login;
-  res.redirect(`/dashboard?user=${encodeURIComponent(userLogin)}`);
+  res.redirect(`/dashboard?user=${encodeURIComponent(req.body.login)}`);
 });
 
 kol.get("/dashboard", (req, res) => {
   const login = req.query.user || 'Гость';
-  res.render("dashboard", { login: login });
+  res.render("dashboard",
+    {
+    title: 'Мои заявки',
+    user: { fio: 'Иванов Иван' },
+    requests: [
+      { room_name: 'Аудитория №1', status: 'Новая' },
+      { room_name: 'Коворкинг', status: 'Завершено' }
+    ]
+  });
 });
 
-kol.get("/about", (req, res) => res.send("О нас"));
+kol.get("/about", (req, res) => {
+    res.render("about", { title: 'О нашей компании', description: 'Наша компания лучшая в мире!'})});
 
 kol.get("/contacts", (req, res) => res.send("Наши контакты"));
 

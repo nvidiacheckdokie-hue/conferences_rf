@@ -1,1 +1,57 @@
 <p>Добро пожаловать, <%= typeof login !== 'undefined' ? login : 'Гость' %>!</p>
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+</head>
+<body>
+
+    <div class="container">
+        <h1><%= title %></h1>
+        <div>
+            <div>
+                <h5>Информация о пользователе</h5>
+                <p>
+                    Добро пожаловать, <strong><%= user.fio %></strong>!
+                </p>
+            </div>
+        </div>
+
+        <div>
+            <div>
+                <h5>Список ваших заявок</h5>
+                <% if (requests && requests.length > 0) { %>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Помещение / Аудитория</th>
+                                <th scope="col">Статус заявки</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% requests.forEach((request, index) => { %>
+                                <tr>
+                                    <th scope="row"><%= index + 1 %></th>
+                                    <td><%= request.room_name %></td>
+                                    <td>
+                                        <span>
+                                            <%= request.status %>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                <% } else { %>
+                    <p>У вас пока нет активных заявок.</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
