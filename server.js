@@ -4,19 +4,13 @@ const PORT = 3000;
 
 kol.use(express.urlencoded({ extended: true }));
 
+kol.set("view engine", "ejs");
+kol.set("views", "./views");
+
 kol.get("/", (req, res) => res.send("Конференции.РФ"));
 
 kol.get("/register", (req, res) => {
-  res.send(`
-    <form method="POST" action="/register">
-      <input name="login" placeholder="Логин" required>
-      <input name="password" type="password" placeholder="Пароль" required>
-      <input name="fio" placeholder="ФИО" required>
-      <input name="phone" type="tel" placeholder="Номер телефона" required>
-      <input name="email" type="email" placeholder="Email" required>
-      <button>Создать пользователя</button>
-    </form>
-  `);
+  res.render("register", { title: "Регистрация на портале", errors: [] });
 });
 
 kol.post("/register", (req, res) => {
@@ -27,6 +21,20 @@ kol.post("/register", (req, res) => {
     ФИО: ${req.body.fio}<br>
     Номер телефона: ${req.body.phone}<br>
     Email: ${req.body.email}`);
+});
+
+kol.get("/login", (req, res) => {
+  res.render("login", { title: "Авторизация на портале", errors: [] });
+});
+
+kol.post("/login", (req, res) => {
+  const userLogin = req.body.login;
+  res.redirect(`/dashboard?user=${encodeURIComponent(userLogin)}`);
+});
+
+kol.get("/dashboard", (req, res) => {
+  const login = req.query.user || 'Гость';
+  res.render("dashboard", { login: login });
 });
 
 kol.get("/about", (req, res) => res.send("О нас"));
