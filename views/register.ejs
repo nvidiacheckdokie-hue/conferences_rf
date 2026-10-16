@@ -1,0 +1,41 @@
+<%- include('header', { title: "Регистрация" }) %>
+
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    <div class="card shadow-sm p-4 bg-white rounded">
+      <h2 class="h4 mb-4 text-center fw-semibold text-dark">Регистрация</h2>
+
+      <form method="POST" action="/register">
+        <div class="mb-3">
+          <label class="form-label text-secondary small">Логин</label>
+          <input name="login" class="form-control" placeholder="Придумайте логин" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label text-secondary small">Пароль</label>
+          <input name="password" type="password" class="form-control" placeholder="••••••••" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label text-secondary small">ФИО</label>
+          <input name="fio" class="form-control" placeholder="Иванов Иван Иванович" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label text-secondary small">Номер телефона</label>
+          <input name="phone" type="tel" class="form-control" placeholder="+7 (999) 000-00-00" required>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label text-secondary small">Email</label>
+          <input name="email" type="email" class="form-control" placeholder="example@mail.ru" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 py-2 fw-medium">Создать пользователя</button>
+      </form>
+      
+    </div>
+  </div>
+</div>
+
+  <%- include('footer') %>

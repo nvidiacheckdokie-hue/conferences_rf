@@ -1,0 +1,30 @@
+<%- include('header', { title: "Авторизация" }) %>
+
+<div class="row justify-content-center">
+    <div class="col-md-5 col-lg-4">
+        <div class="card shadow-sm p-4 bg-white rounded">
+            <h2 class="h4 mb-4 text-center fw-semibold text-dark">Вход в систему</h2>
+            
+            <form method="POST" action="/login">
+                <div class="mb-3">
+                    <label class="form-label text-secondary small">Логин</label>
+                    <input name="login" class="form-control" placeholder="Введите логин" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label text-secondary small">Пароль</label>
+                    <input name="password" type="password" class="form-control" placeholder="••••••••" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-medium">Авторизоваться</button>
+            </form>
+
+            <div class="text-center mt-3">
+                <a href="/register" class="small text-primary text-decoration-none">Ещё не зарегистрированы?</a>
+            </div>
+        </div>
+        
+    </div>
+</div>
+  
+<%- include('footer') %>
