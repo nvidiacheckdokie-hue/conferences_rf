@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <%- include('header', { title: "Личный кабинет" }) %>
 
 <div class="row g-4">
@@ -22,11 +23,46 @@
                                 <th scope="col" class="py-3">#</th>
                                 <th scope="col" class="py-3">Помещение / Аудитория</th>
                                 <th scope="col" class="py-3">Статус заявки</th>
+=======
+<p>Добро пожаловать, <%= typeof login !== 'undefined' ? login : 'Гость' %>!</p>
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+</head>
+<body>
+
+    <div class="container">
+        <h1><%= title %></h1>
+        <div>
+            <div>
+                <h5>Информация о пользователе</h5>
+                <p>
+                    Добро пожаловать, <strong><%= user.fio %></strong>!
+                </p>
+            </div>
+        </div>
+
+        <div>
+            <div>
+                <h5>Список ваших заявок</h5>
+                <% if (requests && requests.length > 0) { %>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Помещение / Аудитория</th>
+                                <th scope="col">Статус заявки</th>
+>>>>>>> 9ef448ef582df6c636047b7a63890163d3061fcf
                             </tr>
                         </thead>
                         <tbody>
                             <% requests.forEach((request, index) => { %>
                                 <tr>
+<<<<<<< HEAD
                                     <th scope="row" class="fw-semibold text-secondary">
                                         <%= index + 1 %>
                                     </th>
@@ -47,11 +83,20 @@
                                                 <%= request.status %>
                                             </span>
                                         <% } %>
+=======
+                                    <th scope="row"><%= index + 1 %></th>
+                                    <td><%= request.room_name %></td>
+                                    <td>
+                                        <span>
+                                            <%= request.status %>
+                                        </span>
+>>>>>>> 9ef448ef582df6c636047b7a63890163d3061fcf
                                     </td>
                                 </tr>
                             <% }); %>
                         </tbody>
                     </table>
+<<<<<<< HEAD
                 </div>
             <% } else { %>
                 <div class="text-center py-4">
@@ -63,3 +108,14 @@
 </div>
 
 <%- include('footer') %>
+=======
+                <% } else { %>
+                    <p>У вас пока нет активных заявок.</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
+>>>>>>> 9ef448ef582df6c636047b7a63890163d3061fcf

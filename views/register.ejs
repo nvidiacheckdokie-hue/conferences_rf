@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <%- include('header', { title: "Регистрация" }) %>
 
 <div class="row justify-content-center">
@@ -39,3 +40,31 @@
 </div>
 
   <%- include('footer') %>
+=======
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+</head>
+<body>
+
+  <h1><%= title %></h1>
+
+  <% if (errors.length) { %>
+    <ul><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul>
+  <% } %>
+
+  <form method="POST" action="/register">
+        <input name="login" placeholder="Логин" required>
+        <input name="password" type="password" placeholder="Пароль" required>
+        <input name="fio" placeholder="ФИО" required>
+        <input name="phone" type="tel" placeholder="Номер телефона" required>
+        <input name="email" type="email" placeholder="Email" required>
+        <button>Создать пользователя</button>
+  </form>
+  
+</body>
+</html>
+>>>>>>> 9ef448ef582df6c636047b7a63890163d3061fcf
