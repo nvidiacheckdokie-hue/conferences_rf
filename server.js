@@ -33,12 +33,19 @@ bon.post("/login", (req, res) => {
 
 bon.get("/dashboard", (req, res) => {
     const login = req.query.login || "Гость";
-    res.render("dashboard", { title: "Личный кабинет", login: login });
+    res.render("dashboard", {
+        title: 'Мои заявки',
+        user: { fio: 'Иванов Иван' },
+        requests: [
+            { room_name: 'Аудитория №1', status: 'Новая' },
+            { room_name: 'Коворкинг', status: 'Завершено' }
+        ]
+    });
 });
 
-bon.get("/about", (req, res) => res.send("О нас"));
+bon.get("/about", (req, res) => res.render("about", { title: "О нас", description: "Мы лучшие в мире!" }));
 
-bon.get("/contacts", (req, res) => res.send("Наши контакты"));
+bon.get("/contacts", (req, res) => res.render("contacts", { title: "Наши контакты", phone: "8(000)123-45-67" }));
 
 bon.listen(PORT, () => {
     console.log(`Сервер: http://localhost:${PORT}`);

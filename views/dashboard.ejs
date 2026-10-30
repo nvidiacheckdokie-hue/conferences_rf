@@ -1,3 +1,27 @@
-<h1><%= title %></h1>
+<h1>
+    <%= title %>
+</h1>
 
-<p>Добро пожаловать, <%= login %>!</p>
+<div>
+    <div class="user-info">
+        Пользователь: <strong><%= user.fio %></strong>
+    </div>
+
+    <h3>Список заявок:</h3>
+
+    <% if (requests.length> 0) { %>
+        <ul>
+            <% requests.forEach(function(request) { %>
+                <li>
+                    <span>
+                        <%= request.room_name %>
+                    </span>
+                    <span class="status <%= request.status.toLowerCase() %>">
+                        <%= request.status %>
+                    </span>
+                </li>
+            <% }); %>
+        </ul>
+        <% } else { %>
+            <p>У вас пока нет отправленных заявок.</p><% } %>
+</div>
