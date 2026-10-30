@@ -1,13 +1,18 @@
 import express from "express";
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const bon = express();
 const PORT = 3000;
 
 bon.use(express.urlencoded({ extended: true }));
+bon.use(express.static(join(__dirname, "public")));
 
 bon.set("view engine", "ejs");
 bon.set("views", "./views");
 
-bon.get("/", (req, res) => res.send("Конференции.РФ"));
+bon.get("/", (req, res) => res.redirect("/login"));
 
 bon.get("/register", (req, res) => {
     res.render("register", { title: "Регистрация на портале", errors: [] });

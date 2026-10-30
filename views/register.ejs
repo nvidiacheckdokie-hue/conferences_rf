@@ -1,13 +1,63 @@
-<h1><%= title %></h1>
-<% if (errors.length) { %>
-  <ul><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul>
-<% } %>
+<%- include('header', { title: "Регистрация" }) %>
 
-<form method="POST" action="/register">
-    <input name="login" placeholder="Логин">
-    <input name="password" type="password" placeholder="Пароль">
-    <input name="fio" placeholder="ФИО">
-    <input name="phone" type="tel" placeholder="Номер телефона">
-    <input name="email" type="email" placeholder="Email">
-    <button>Создать пользователя</button>
-</form>
+<div class="row justify-content-center">
+  <div class="col-12 col-sm-10 col-md-8 col-lg-6" style="max-width: 440px;">
+
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-4">
+        <h2 class="h4 card-title text-center mb-4">Регистрация на портале</h2>
+
+        <% if (errors && errors.length) { %>
+          <div class="alert alert-danger" role="alert">
+            <ul class="mb-0 ps-3">
+              <% errors.forEach(e=> { %>
+                <li>
+                  <%= e %>
+                </li>
+                <% }) %>
+            </ul>
+          </div>
+          <% } %>
+
+          <form method="POST" action="/register">
+
+            <div class="mb-3">
+              <label for="loginInput" class="form-label text-muted small fw-medium">Логин</label>
+              <input type="text" id="loginInput" name="login" class="form-control" placeholder="Придумайте логин"
+                required>
+            </div>
+
+            <div class="mb-3">
+              <label for="passwordInput" class="form-label text-muted small fw-medium">Пароль</label>
+              <input type="password" id="passwordInput" name="password" class="form-control"
+                placeholder="Придумайте пароль" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="fioInput" class="form-label text-muted small fw-medium">ФИО</label>
+              <input type="text" id="fioInput" name="fio" class="form-control" placeholder="Иванов Иван Иванович"
+                required>
+            </div>
+
+            <div class="mb-3">
+              <label for="phoneInput" class="form-label text-muted small fw-medium">Номер телефона</label>
+              <input type="tel" id="phoneInput" name="phone" class="form-control" placeholder="+7 (999) 000-00-00"
+                required>
+            </div>
+
+            <div class="mb-4">
+              <label for="emailInput" class="form-label text-muted small fw-medium">Email</label>
+              <input type="email" id="emailInput" name="email" class="form-control" placeholder="example@mail.ru"
+                required>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-medium">Создать пользователя</button>
+
+          </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<%- include('footer') %>
