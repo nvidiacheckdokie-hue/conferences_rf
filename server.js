@@ -231,6 +231,31 @@ bon.get("/rooms/type/:type", (req, res) => {
 
 bon.use(express.json());
 
+bon.get("/create", requireAuth, (req, res) => {
+  const rooms = Room.findAll();
+  res.render("create_request", { rooms, errors: [] });
+});
+
+bon.post("/create", requireAuth, (req, res) => {
+  Request.create({
+    userId: req.session.userId,
+    roomId: req.body.room_id,
+    dateStart: req.body.date_start,
+    payment: req.body.payment,
+  });
+  res.redirect("/dashboard");
+});
+
+bon.get("/admin", (req, res) => {
+  const requests = Request.findAllDetailed();
+  res.render("requests_list", { isAdmin: true, requests });
+});
+
+bon.post("/admin", (req, res) => {
+  Request.updateStatus(req.body.id, req.body.status);
+  res.redirect("/admin");
+});
+
 // const NewUser = User.create({
 //   login: 'new_user',
 //   password: 'test12345',

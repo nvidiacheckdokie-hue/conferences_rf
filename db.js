@@ -25,14 +25,17 @@ db.exec(`
 
 const users_count = db.prepare('SELECT COUNT(*) AS c FROM users').get().c;
 
+const hash1 = (pwd) => bcrypt.hashSync(pwd, 10);
+
 if (users_count === 0) {
     const stat = db.prepare(`
         INSERT INTO users (login, password, fio, phone, email)
         VALUES (?, ?, ?, ?, ?)
     `);
-    stat.run('ivan', 'demo', 'Иванов Иван', '8(999)123-45-67', 'ivan@example.com');
-    stat.run('petr', 'demo', 'Петров Пётр', '8(999)123-45-68', 'petr@example.com');
-    stat.run('anna', 'demo', 'Анна Сидорова', '8(999)123-45-69', 'anna@example.com');
+    stat.run('ivan', hash, 'Иванов Иван', '8(999)123-45-67', 'ivan@example.com');
+    stat.run('petr', hash, 'Петров Пётр', '8(999)123-45-68', 'petr@example.com');
+    stat.run('anna', hash, 'Анна Сидорова', '8(999)123-45-69', 'anna@example.com');
+    stat.run('Conf2027', hash1('Demo77'), 'Администратор', '8(999)000-00-00', 'admin@conf.ru');
     console.log('Тестовые пользователи добавлены');
 }
 
@@ -54,9 +57,9 @@ if (rooms_count === 0) {
         INSERT INTO rooms (name, type, capacity)
         VALUES (?, ?, ?)
     `);
-    stat.run('Альфа', 'Конференц-зал', 'Большая');
-    stat.run('Бета', 'Конференц-зал', 'Средняя');
-    stat.run('Гамма', 'Аудиенц-зал', 'Маленькая');
+    stat.run('Альфа', 'Аудитория', '565');
+    stat.run('Бета', 'Коворкинг', '100');
+    stat.run('Гамма', 'Кинозал', '10');
     console.log('Тестовые комнаты добавлены');
 }
 
@@ -66,6 +69,7 @@ db.exec(`
     CREATE TABLE IF NOT EXISTS reviews (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
+    room_id INTEGER NOT NULL,
     date_start TEXT NOT NULL,
     review TEXT,
     created_at TEXT DEFAULT (datetime('now'))
@@ -76,12 +80,12 @@ const reviews_count = db.prepare('SELECT COUNT(*) AS c FROM reviews').get().c;
 
 if (reviews_count === 0) {
     const stat = db.prepare(`
-        INSERT INTO reviews (user_id, date_start, review)
-        VALUES (?, ?, ?)
+        INSERT INTO reviews (user_id, room_id, date_start, review)
+        VALUES (?, ?, ?, ?)
     `);
-    stat.run(1, "2027-03-15", 'Прекрасный магазин!');
-    stat.run(2, "2027-03-20", "Хорошее обслуживание!");
-    stat.run(3, "2027-04-01", "Вот отстой!");
+    stat.run(1, 1, "2027-03-15", 'Прекрасный магазин!');
+    stat.run(2, 2, "2027-03-20", "Хорошее обслуживание!");
+    stat.run(3, 3, "2027-04-01", "Вот отстой!");
     console.log('Тестовые отзывы добавлены');
 }
 
@@ -109,22 +113,22 @@ if (requests_count === 0) {
         INSERT INTO requests (user_id, room_id, date_start, payment)
         VALUES (?, ?, ?, ?)
     `);
-    stmtRequest.run(1, 1, "2027-03-15", 'При очном посещении');
-    stmtRequest.run(1, 3, "2027-03-20", "Перевод по СБП");
-    stmtRequest.run(3, 3, "2027-04-01", "При очном посещении");
-    console.log('Тестовые записи добавлены');
+    // stmtRequest.run(1, 1, "2027-03-15", 'При очном посещении');
+    // stmtRequest.run(1, 3, "2027-03-20", "Перевод по СБП");
+    // stmtRequest.run(3, 3, "2027-04-01", "При очном посещении");
 
-    const run1 = db.prepare(`
+    const run = db.prepare(`
     INSERT INTO requests (user_id, room_id, date_start, payment, review)
     SELECT 
         reviews.user_id,
-        1,
+        reviews.room_id,
         reviews.date_start,
         'При очном посещении',
         reviews.review
     FROM reviews
 `);
-    run1.run();
+    run.run();
+    console.log('Тестовые записи добавлены');
 }
 
 const run = db.prepare(`SELECT requests.*, rooms.name FROM requests
@@ -150,13 +154,13 @@ class UserModel {
         return db.prepare(`SELECT COUNT(*) FROM ${this.table}`).pluck().get();
     }
     exists(login) {
-        return db.prepare(`SELECT CASE WHEN EXISTS(SELECT * FROM ${this.table} WHERE login = ?) THEN 'true' ELSE 'false' END`).pluck().get(login);
+    return db.prepare(`SELECT EXISTS(SELECT 1 FROM ${this.table} WHERE login = ?)`).pluck().get(login);
     }
     create({login, password, fio, phone, email}) {
-        const hash = bcrypt.hashSync('password', 10);
+        const userHash = bcrypt.hashSync(password, 10); 
         const r = db.prepare(`
             INSERT INTO ${this.table} (login, password, fio, phone, email) VALUES (?, ?, ?, ?, ?)
-            `).run(login, hash, fio, phone, email);
+            `).run(login, userHash, fio, phone, email);
         return this.findById(r.lastInsertRowid);
     }
 }
@@ -229,13 +233,13 @@ class RequestModel {
 
 export const Request = new RequestModel();
 
-const newRequest = Request.create( {
-    userId: 1,
-    roomId: 2,
-    dateStart: "2027-04-10",
-    payment: "При очном посещении",
-});
-console.log("Созданная заявка");
-console.log(newRequest);
+// const newRequest = Request.create( {
+//     userId: 1,
+//     roomId: 2,
+//     dateStart: "2027-04-10",
+//     payment: "При очном посещении",
+// // });
+// console.log("Созданная заявка");
+// console.log(newRequest);
 
 export default db;
