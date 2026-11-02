@@ -1,0 +1,117 @@
+<%- include('header', { title: "Авторизация" }) %>
+
+<div class="row justify-content-center">
+    <div class="col-md-5 col-lg-4">
+        <div class="card shadow-sm p-4 bg-white rounded">
+            <div class="card-body">
+                <% if (typeof flash !== 'undefined' && flash) { %>
+                    <div class="alert alert-<%= flash.type %>">
+                        <%= flash.text %>
+                    </div>
+                <% } %>
+
+                <ul class="nav nav-tabs mb-3" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link <%= mode === 'register' ? 'active' : '' %>"
+                            data-bs-toggle="tab" data-bs-target="#register-tab" type="button" role="tab">
+                            Регистрация
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link <%= mode === 'login' ? 'active' : '' %>"
+                            data-bs-toggle="tab" data-bs-target="#login-tab" type="button" role="tab">
+                            Вход
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="tab-content">
+                <div class="tab-pane fade <%= mode === 'register' ? 'show active' : '' %>" id="register-tab"
+                    role="tabpanel">
+                    <% if (mode === 'register' && typeof errors !== 'undefined' && errors && errors.length) { %>
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                <% errors.forEach(e => { %>
+                                    <li><%= e %></li>
+                                <% }) %>
+                            </ul>
+                        </div>
+                    <% } %>
+                    
+                    <form method="POST" action="/register">
+                        <div class="mb-3">
+                            <label for="reg-login" class="form-label text-secondary small">Логин</label>
+                            <input id="reg-login" name="login" class="form-control" placeholder="Придумайте логин" required autocomplete="username"
+                            value="<%= typeof form !== 'undefined' ? (form.login || '') : '' %>">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="reg-password" class="form-label text-secondary small">Пароль</label>
+                            <input id="reg-password" name="password" type="password" class="form-control" placeholder="••••••••"
+                                required autocomplete="new-password">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="fio" class="form-label text-secondary small">ФИО</label>
+                            <input id="fio" name="fio" class="form-control" placeholder="Иванов Иван Иванович" required
+                            value="<%= typeof form !== 'undefined' ? (form.fio || '') : '' %>">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="phone" class="form-label text-secondary small">Номер телефона</label>
+                            <input id="phone" name="phone" type="tel" class="form-control" placeholder="+7 (999) 000-00-00"
+                                autocomplete="off" required
+                                value="<%= typeof form !== 'undefined' ? (form.phone || '') : '' %>">
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="email" class="form-label text-secondary small">Email</label>
+                            <input id="email" name="email" type="email" class="form-control" placeholder="example@mail.ru"
+                                autocomplete="off" required
+                                value="<%= typeof form !== 'undefined' ? (form.email || '') : '' %>">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-medium">Создать пользователя</button>
+                    </form>
+
+                    <p class="mt-3 text-center">
+                        Уже есть аккаунт?
+                        <button class="btn btn-link p-0" data-bs-toggle="tab" data-bs-target="#login-tab" type="button">Войти</button>
+                    </p>
+                </div>
+
+                <div class="tab-pane fade <%= mode === 'login' ? 'show active' : '' %>" role="tabpanel" id="login-tab">
+                    <% if (mode === 'login' && typeof errors !== 'undefined' && errors && errors.length) { %>
+                        <div class="alert alert-danger">
+                            <%= errors[0] %>
+                        </div>
+                    <% } %>
+                    
+                    <form method="POST" action="/login">
+                        <div class="mb-3">
+                            <label class="form-label text-secondary small" for="auth-login">Логин</label>
+                            <input id="auth-login" name="login" class="form-control" placeholder="Введите логин" required autocomplete="username">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label text-secondary small" for="auth-password">Пароль</label>
+                            <input id="auth-password" name="password" type="password" class="form-control" placeholder="••••••••" autocomplete="current-password"
+                                required>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-medium">Авторизоваться</button>
+                    </form>
+
+                    <p class="text-center mt-3">
+                        Ещё не зарегистрированы?
+                        <button class="btn btn-link p-0" data-bs-toggle="tab" data-bs-target="#register-tab" type="button">Регистрация</button>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<%- include('footer') %>

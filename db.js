@@ -6,6 +6,11 @@ import { dirname, join } from "path";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const db = new Database(join(__dirname, 'conf.db'));
 
+const hash = bcrypt.hashSync('demo', 10);
+console.log(">>>", hash);
+
+db.pragma("foreign_keys = ON");
+
 db.exec(`
     CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,7 +66,6 @@ db.exec(`
     CREATE TABLE IF NOT EXISTS reviews (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
-    room_id INTEGER NOT NULL,
     date_start TEXT NOT NULL,
     review TEXT,
     created_at TEXT DEFAULT (datetime('now'))
@@ -72,12 +76,12 @@ const reviews_count = db.prepare('SELECT COUNT(*) AS c FROM reviews').get().c;
 
 if (reviews_count === 0) {
     const stat = db.prepare(`
-        INSERT INTO reviews (user_id, room_id, date_start, review)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO reviews (user_id, date_start, review)
+        VALUES (?, ?, ?)
     `);
-    stat.run(1, 1, "2027-03-15", 'Прекрасный магазин!');
-    stat.run(2, 2, "2027-03-20", "Хорошее обслуживание!");
-    stat.run(3, 3, "2027-04-01", "Вот отстой!");
+    stat.run(1, "2027-03-15", 'Прекрасный магазин!');
+    stat.run(2, "2027-03-20", "Хорошее обслуживание!");
+    stat.run(3, "2027-04-01", "Вот отстой!");
     console.log('Тестовые отзывы добавлены');
 }
 
@@ -102,6 +106,15 @@ const requests_count = db.prepare('SELECT COUNT(*) AS c FROM requests').get().c;
 
 if (requests_count === 0) {
     const stmtRequest = db.prepare(`
+        INSERT INTO requests (user_id, room_id, date_start, payment)
+        VALUES (?, ?, ?, ?)
+    `);
+    stmtRequest.run(1, 1, "2027-03-15", 'При очном посещении');
+    stmtRequest.run(1, 3, "2027-03-20", "Перевод по СБП");
+    stmtRequest.run(3, 3, "2027-04-01", "При очном посещении");
+    console.log('Тестовые записи добавлены');
+
+    const run1 = db.prepare(`
     INSERT INTO requests (user_id, room_id, date_start, payment, review)
     SELECT 
         reviews.user_id,
@@ -111,13 +124,13 @@ if (requests_count === 0) {
         reviews.review
     FROM reviews
 `);
-    stmtRequest.run();
+    run1.run();
 }
 
 const run = db.prepare(`SELECT requests.*, rooms.name FROM requests
     JOIN users ON users.id = requests.user_id 
     JOIN rooms ON rooms.id = requests.room_id`);
-run.all();
+run.run();
 
 
 class UserModel {
@@ -140,7 +153,7 @@ class UserModel {
         return db.prepare(`SELECT CASE WHEN EXISTS(SELECT * FROM ${this.table} WHERE login = ?) THEN 'true' ELSE 'false' END`).pluck().get(login);
     }
     create({login, password, fio, phone, email}) {
-        const hash = bcrypt.hashSync(password, 10);
+        const hash = bcrypt.hashSync('password', 10);
         const r = db.prepare(`
             INSERT INTO ${this.table} (login, password, fio, phone, email) VALUES (?, ?, ?, ?, ?)
             `).run(login, hash, fio, phone, email);

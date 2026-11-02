@@ -1,11 +1,14 @@
 import express from "express";
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import session from "express-session";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 
-import db from './db.js';
-import { User } from './db.js';
-import { Room } from './db.js';
-import { Request } from './db.js';
+import db from "./db.js";
+import { User } from "./db.js";
+import { Room } from "./db.js";
+import { Request } from "./db.js";
+
+import bcrypt from "bcryptjs";
 
 // console.log("Все пользователи: ", User.findAll());
 // console.log("Количество пользователей: ", User.count());
@@ -60,51 +63,213 @@ const bon = express();
 const PORT = 3000;
 
 bon.use(express.urlencoded({ extended: true }));
-bon.use(express.static(join(__dirname, "public")));
 
 bon.set("view engine", "ejs");
 bon.set("views", "./views");
 
-bon.get("/", (req, res) => res.redirect("/login"));
+bon.use(express.static(join(__dirname, "public")));
+
+bon.use(
+  session({
+    secret: "conf2027-secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 2, //1000 мс * 60 сек * 60 мин * 2 ч = 7 200 000 мс
+      httpOnly: true,
+      sameSite: "lax", // Защита от CSRF
+    },
+  }),
+);
+
+bon.use((req, res, next) => {
+  res.locals.session = req.session;
+  next();
+});
+
+const validate = (data) =>
+  RULES.filter(({ field, test }) => !test((data[field] || "").trim())).map(
+    (r) => r.msg,
+  );
+
+const requireAuth = (req, res, next) => {
+  req.session.userId ? next() : res.redirect("/login");
+};
+
+const requireAdmin = (req, res, next) => {
+  req.session.login === "Conf2027" ? next() : res.redirect("/login");
+};
+
+const INACTIVITY_LIMIT = 20 * 60 * 1000;
+bon.use((req, res, next) => {
+  if (req.session && req.session.userId) {
+    const now = Date.now();
+
+    if (
+      req.session.lastActivity &&
+      now - req.session.lastActivity > INACTIVITY_LIMIT
+    ) {
+      return req.session.destroy(() => {
+        res.redirect("/login");
+      });
+    }
+    req.session.lastActivity = now;
+  }
+  next();
+});
+
+bon.get("/", (req, res) => res.redirect("rooms"));
 
 bon.get("/register", (req, res) => {
-    res.render("register", { title: "Регистрация на портале", errors: [] });
+  res.render("auth", {
+    mode: "register",
+    form: {},
+    errors: [],
+  });
 });
 
 bon.post("/register", (req, res) => {
-    res.send(`Пользователь зарегистрирован!<br>
-    Логин: ${req.body.login}<br>
-    Пароль: ${req.body.password}<br>
-    ФИО: ${req.body.fio}<br>
-    Номер телефона: ${req.body.phone}<br>
-    Email: ${req.body.email}`);
+  const errors = validate(req.body);
+
+  if (User.exists(req.body.login)) {
+    errors.push("Логин уже занят");
+  }
+  if (errors.length) {
+    return res.render("auth", { mode: "register", form: req.body, errors });
+  }
+
+  User.create(req.body);
+  req.session.flash = { type: "success", text: "Регистрация успешна" };
+  res.redirect("/login");
+});
+
+bon.post("/register", (req, res) => {
+  const errors = validate(req.body);
+  if (req.body.login) {
+    const isTaken = !!User.exists(req.body.login);
+
+    if (isTaken) {
+      errors.push("Логин уже занят");
+    }
+  }
+
+  if (errors.length) {
+    return res.render("auth", {
+      mode: "register",
+      form: req.body,
+      errors,
+      flash: null,
+    });
+  }
+
+  req.body.password = bcrypt.hashSync(req.body.password, 10);
+
+  User.create(req.body);
+
+  req.session.flash = { type: "success", text: "Регистрация успешна" };
+  res.redirect("/login");
 });
 
 bon.get("/login", (req, res) => {
-    res.render("login", { title: "Авторизация на портале", errors: [] });
+  const flash = req.session.flash || null;
+  delete req.session.flash;
+  res.render("auth", {
+    mode: "login",
+    errors: null,
+    flash: null,
+  });
 });
 
 bon.post("/login", (req, res) => {
-    const userLogin = encodeURIComponent(req.body.login);
-    res.redirect(`/dashboard?login=${userLogin}`);
+  const user = User.findByLogin(req.body.login);
+
+  if (user && bcrypt.compareSync(req.body.password, user.password)) {
+    req.session.userId = user.id;
+    req.session.fio = user.fio;
+    req.session.login = user.login;
+    req.session.lastActivity = Date.now();
+
+    return res.redirect(user.login === "Conf2027" ? "/admin" : "/dashboard");
+  }
+
+  res.render("auth", {
+    mode: "login",
+    errors: ["Неверный логин или пароль"],
+    flash: null,
+  });
 });
 
-bon.get("/dashboard", (req, res) => {
-    const login = req.query.login || "Гость";
-    res.render("dashboard", {
-        title: 'Мои заявки',
-        user: { fio: 'Иванов Иван' },
-        requests: [
-            { room_name: 'Аудитория №1', status: 'Новая' },
-            { room_name: 'Коворкинг', status: 'Завершено' }
-        ]
-    });
+bon.all('/logout', (req, res) => {
+  req.session.destroy(() => res.redirect('/login'));
 });
 
-bon.get("/about", (req, res) => res.render("about", { title: "О нас", description: "Мы лучшие в мире!" }));
+bon.get('/logout', (req, res) => {
+  req.session.destroy(() => res.redirect('/login'));
+})
 
-bon.get("/contacts", (req, res) => res.render("contacts", { title: "Наши контакты", phone: "8(000)123-45-67" }));
+bon.get("/dashboard", requireAuth, (req, res) => {
+  const requests = Request.findByUserId(req.session.userId);
+  const rooms = Room.findAll();
+  res.render("dashboard", { isAdmin: false, requests: requests, rooms: rooms });
+});
+
+bon.get("/about", (req, res) => {
+  res.render("about", { description: "Наша компания лучшая в мире!" });
+});
+
+bon.get("/contacts", (req, res) => res.render("contacts"));
+
+bon.get("/rooms", (req, res) => {
+  const rooms = Room.findAll();
+  res.render("rooms", { rooms });
+});
+
+bon.get("/rooms/type/:type", (req, res) => {
+  const rooms = Room.findAll().filter((r) => r.type === req.params.type);
+  res.render("rooms", { rooms });
+});
+
+bon.use(express.json());
+
+// const NewUser = User.create({
+//   login: 'new_user',
+//   password: 'test12345',
+//   fio: 'тест всех тестов',
+//   phone: '8(999)111-22-33',
+//   email: 'test@example.com',
+// })
+// console.log("Новый пользователь");
+// console.log(NewUser);
+
+// ======================== AUTH
+const RULES = [
+  {
+    field: "login",
+    test: (v) => /^[A-Za-z0-9]{6,}$/.test(v),
+    msg: "Логин: латиница+цифры, минимум 6 символов",
+  },
+  {
+    field: "password",
+    test: (v) => v && v.length >= 8,
+    msg: "Пароль: минимум 8 символов",
+  },
+  {
+    field: "fio",
+    test: (v) => /^[А-Яа-яЁё\s]+$/.test(v),
+    msg: "ФИО: только кириллица и пробелы",
+  },
+  {
+    field: "phone",
+    test: (v) => /^8\(\d{3}\)\d{3}-\d{2}-\d{2}$/.test(v),
+    msg: "Телефон: формат 8(ХХХ)ХХХ-ХХ-ХХ",
+  },
+  {
+    field: "email",
+    test: (v) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v),
+    msg: "Email: некорректный формат",
+  },
+];
 
 bon.listen(PORT, () => {
-    console.log(`Сервер: http://localhost:${PORT}`);
+  console.log(`Сервер: http://localhost:${PORT}`);
 });
