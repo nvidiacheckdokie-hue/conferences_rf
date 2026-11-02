@@ -2,6 +2,59 @@ import express from "express";
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
+import db from './db.js';
+import { User } from './db.js';
+import { Room } from './db.js';
+import { Request } from './db.js';
+
+// console.log("Все пользователи: ", User.findAll());
+// console.log("Количество пользователей: ", User.count());
+// console.log("Пользователь с логином ivan: ", User.exists("ivan"));
+// console.log("Пользователь с id = 1: ", User.findById(1));
+// console.log("Пользователь с логином ivan: ", User.findByLogin("ivan"));
+
+// console.log("Все комнаты:");
+// console.log(Room.findAll());
+
+// console.log("Комната с id=1:");
+// console.log(Room.findById(1));
+
+// console.log("Все аудитории:");
+// console.log(Room.findByType("Конференц-зал"));
+
+// console.log("Всего комнат:");
+// console.log(Room.count());
+
+/*Request.updateStatus(1, "Завершено");
+
+console.log("Заявка с id=1:");
+console.log(Request.findById(1));
+
+console.log("Заявки пользователя id=1:");
+console.log(Request.findByUserId(1));
+
+console.log("Все заявки (JOIN):");
+console.log(Request.findAllDetailed());
+
+console.log("Всего заявок:");
+console.log(Request.count());*/
+
+// const users = db.prepare('SELECT * FROM users').all();
+// console.log('Все пользователи');
+// console.log(users);
+
+// const rooms = db.prepare('SELECT * FROM rooms').all();
+// console.log('Все комнаты');
+// console.log(rooms);
+
+// const reviews = db.prepare('SELECT * FROM reviews').all();
+// console.log('Все отзывы');
+// console.log(reviews);
+
+// const requests = db.prepare('SELECT * FROM requests').all();
+// console.log('Все запросы');
+// console.log(requests);
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const bon = express();
 const PORT = 3000;
