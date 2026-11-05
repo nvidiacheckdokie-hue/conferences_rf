@@ -4,10 +4,7 @@ import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
 import db from "./db.js";
-import { User } from "./db.js";
-import { Room } from "./db.js";
-import { Request } from "./db.js";
-
+import { User, Room, Request } from "./db.js";
 import bcrypt from "bcryptjs";
 
 // console.log("Все пользователи: ", User.findAll());
@@ -63,10 +60,10 @@ const bon = express();
 const PORT = 3000;
 
 bon.use(express.urlencoded({ extended: true }));
+bon.use(express.json());
 
 bon.set("view engine", "ejs");
 bon.set("views", "./views");
-
 bon.use(express.static(join(__dirname, "public")));
 
 bon.use(
@@ -75,9 +72,9 @@ bon.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 2, //1000 мс * 60 сек * 60 мин * 2 ч = 7 200 000 мс
+      maxAge: 1000 * 60 * 60 * 2, // 2 часа
       httpOnly: true,
-      sameSite: "lax", // Защита от CSRF
+      sameSite: "lax",
     },
   }),
 );
@@ -87,10 +84,36 @@ bon.use((req, res, next) => {
   next();
 });
 
+const RULES = [
+  {
+    field: "login",
+    test: (v) => /^[A-Za-z0-9]{6,}$/.test(v),
+    msg: "Логин должен содержать только латиницу и цифры, не менее 6 символов",
+  },
+  {
+    field: "password",
+    test: (v) => v && v.length >= 8,
+    msg: "Пароль должен быть не менее 8 символов",
+  },
+  {
+    field: "fio",
+    test: (v) => /^[А-Яа-яЁё\s\-]+$/.test(v),
+    msg: "ФИО должно содержать только кириллицу, пробелы или дефисы",
+  },
+  {
+    field: "phone",
+    test: (v) => v && v.trim().length > 0,
+    msg: "Телефон обязателен для заполнения",
+  },
+  {
+    field: "email",
+    test: (v) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v),
+    msg: "Некорректный формат Email",
+  },
+];
+
 const validate = (data) =>
-  RULES.filter(({ field, test }) => !test((data[field] || "").trim())).map(
-    (r) => r.msg,
-  );
+  RULES.filter(({ field, test }) => !test((data[field] || "").trim())).map((r) => r.msg);
 
 const requireAuth = (req, res, next) => {
   req.session.userId ? next() : res.redirect("/login");
@@ -104,11 +127,7 @@ const INACTIVITY_LIMIT = 20 * 60 * 1000;
 bon.use((req, res, next) => {
   if (req.session && req.session.userId) {
     const now = Date.now();
-
-    if (
-      req.session.lastActivity &&
-      now - req.session.lastActivity > INACTIVITY_LIMIT
-    ) {
+    if (req.session.lastActivity && now - req.session.lastActivity > INACTIVITY_LIMIT) {
       return req.session.destroy(() => {
         res.redirect("/login");
       });
@@ -118,36 +137,26 @@ bon.use((req, res, next) => {
   next();
 });
 
-bon.get("/", (req, res) => res.redirect("rooms"));
+
+
+// --- РОУТЫ --- //
+
+bon.get("/", (req, res) => res.redirect("/rooms"));
 
 bon.get("/register", (req, res) => {
   res.render("auth", {
     mode: "register",
     form: {},
     errors: [],
+    flash: null
   });
 });
 
 bon.post("/register", (req, res) => {
   const errors = validate(req.body);
-
-  if (User.exists(req.body.login)) {
-    errors.push("Логин уже занят");
-  }
-  if (errors.length) {
-    return res.render("auth", { mode: "register", form: req.body, errors });
-  }
-
-  User.create(req.body);
-  req.session.flash = { type: "success", text: "Регистрация успешна" };
-  res.redirect("/login");
-});
-
-bon.post("/register", (req, res) => {
-  const errors = validate(req.body);
+  
   if (req.body.login) {
     const isTaken = !!User.exists(req.body.login);
-
     if (isTaken) {
       errors.push("Логин уже занят");
     }
@@ -163,10 +172,9 @@ bon.post("/register", (req, res) => {
   }
 
   req.body.password = bcrypt.hashSync(req.body.password, 10);
-
   User.create(req.body);
 
-  req.session.flash = { type: "success", text: "Регистрация успешна" };
+  req.session.flash = { type: "success", text: "Регистрация успешна! Теперь вы можете войти." };
   res.redirect("/login");
 });
 
@@ -175,8 +183,9 @@ bon.get("/login", (req, res) => {
   delete req.session.flash;
   res.render("auth", {
     mode: "login",
+    form: {},
     errors: null,
-    flash: null,
+    flash: flash,
   });
 });
 
@@ -194,23 +203,45 @@ bon.post("/login", (req, res) => {
 
   res.render("auth", {
     mode: "login",
+    form: req.body,
     errors: ["Неверный логин или пароль"],
     flash: null,
   });
 });
 
-bon.all('/logout', (req, res) => {
-  req.session.destroy(() => res.redirect('/login'));
+bon.get("/logout", (req, res) => {
+  req.session.destroy(() => res.redirect("/login"));
 });
-
-bon.get('/logout', (req, res) => {
-  req.session.destroy(() => res.redirect('/login'));
-})
 
 bon.get("/dashboard", requireAuth, (req, res) => {
   const requests = Request.findByUserId(req.session.userId);
   const rooms = Room.findAll();
-  res.render("dashboard", { isAdmin: false, requests: requests, rooms: rooms });
+  res.render("dashboard", { isAdmin: false, requests, rooms });
+});
+
+bon.get("/create", requireAuth, (req, res) => {
+  const rooms = Room.findAll();
+  res.render("create_request", { rooms, errors: [] });
+});
+
+bon.post("/create", requireAuth, (req, res) => {
+  Request.create({
+    userId: req.session.userId,
+    roomId: req.body.room_id,
+    dateStart: req.body.date_start,
+    payment: req.body.payment,
+  });
+  res.redirect("/dashboard");
+});
+
+bon.get("/admin", requireAdmin, (req, res) => {
+  const requests = Request.findAllDetailed();
+  res.render("requests_list", { isAdmin: true, requests });
+});
+
+bon.post("/admin", requireAdmin, (req, res) => {
+  Request.updateStatus(req.body.id, req.body.status);
+  res.redirect("/admin");
 });
 
 bon.get("/about", (req, res) => {
@@ -228,72 +259,6 @@ bon.get("/rooms/type/:type", (req, res) => {
   const rooms = Room.findAll().filter((r) => r.type === req.params.type);
   res.render("rooms", { rooms });
 });
-
-bon.use(express.json());
-
-bon.get("/create", requireAuth, (req, res) => {
-  const rooms = Room.findAll();
-  res.render("create_request", { rooms, errors: [] });
-});
-
-bon.post("/create", requireAuth, (req, res) => {
-  Request.create({
-    userId: req.session.userId,
-    roomId: req.body.room_id,
-    dateStart: req.body.date_start,
-    payment: req.body.payment,
-  });
-  res.redirect("/dashboard");
-});
-
-bon.get("/admin", (req, res) => {
-  const requests = Request.findAllDetailed();
-  res.render("requests_list", { isAdmin: true, requests });
-});
-
-bon.post("/admin", (req, res) => {
-  Request.updateStatus(req.body.id, req.body.status);
-  res.redirect("/admin");
-});
-
-// const NewUser = User.create({
-//   login: 'new_user',
-//   password: 'test12345',
-//   fio: 'тест всех тестов',
-//   phone: '8(999)111-22-33',
-//   email: 'test@example.com',
-// })
-// console.log("Новый пользователь");
-// console.log(NewUser);
-
-// ======================== AUTH
-const RULES = [
-  {
-    field: "login",
-    test: (v) => /^[A-Za-z0-9]{6,}$/.test(v),
-    msg: "Логин: латиница+цифры, минимум 6 символов",
-  },
-  {
-    field: "password",
-    test: (v) => v && v.length >= 8,
-    msg: "Пароль: минимум 8 символов",
-  },
-  {
-    field: "fio",
-    test: (v) => /^[А-Яа-яЁё\s]+$/.test(v),
-    msg: "ФИО: только кириллица и пробелы",
-  },
-  {
-    field: "phone",
-    test: (v) => /^8\(\d{3}\)\d{3}-\d{2}-\d{2}$/.test(v),
-    msg: "Телефон: формат 8(ХХХ)ХХХ-ХХ-ХХ",
-  },
-  {
-    field: "email",
-    test: (v) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v),
-    msg: "Email: некорректный формат",
-  },
-];
 
 bon.listen(PORT, () => {
   console.log(`Сервер: http://localhost:${PORT}`);

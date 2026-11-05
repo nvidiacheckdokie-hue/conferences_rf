@@ -134,7 +134,7 @@ if (requests_count === 0) {
 const run = db.prepare(`SELECT requests.*, rooms.name FROM requests
     JOIN users ON users.id = requests.user_id 
     JOIN rooms ON rooms.id = requests.room_id`);
-run.run();
+run.all();
 
 
 class UserModel {
@@ -154,14 +154,16 @@ class UserModel {
         return db.prepare(`SELECT COUNT(*) FROM ${this.table}`).pluck().get();
     }
     exists(login) {
-    return db.prepare(`SELECT EXISTS(SELECT 1 FROM ${this.table} WHERE login = ?)`).pluck().get(login);
+        return db.prepare(`SELECT EXISTS(SELECT 1 FROM ${this.table} WHERE login = ?)`).pluck().get(login);
     }
-    create({login, password, fio, phone, email}) {
-        const userHash = bcrypt.hashSync(password, 10); 
+    create({ login, password, fio, phone, email }) {
         const r = db.prepare(`
             INSERT INTO ${this.table} (login, password, fio, phone, email) VALUES (?, ?, ?, ?, ?)
-            `).run(login, userHash, fio, phone, email);
+            `).run(login, password, fio, phone, email);
         return this.findById(r.lastInsertRowid);
+    }
+    passwordRestore(new_password) {
+        db.prepare(`UPDATE ${this.table} SET password = ? WHERE id = ?`).run(new_password, id);
     }
 }
 
@@ -195,7 +197,14 @@ class RequestModel {
         return db.prepare(`SELECT * FROM ${this.table} WHERE id = ?`).get(id);
     }
     findByUserId(userID) {
-        return db.prepare(`SELECT * FROM ${this.table} WHERE user_id = ?`).all(userID);
+        return db.prepare(`
+            SELECT 
+                requests.*, 
+                rooms.name AS room_name 
+            FROM requests
+            JOIN rooms ON requests.room_id = rooms.id
+            WHERE requests.user_id = ?
+        `).all(userID);
     }
     findAllDetailed() {
         return db.prepare(`
@@ -206,6 +215,7 @@ class RequestModel {
             requests.status,
             requests.created_at,
             users.fio AS user_fio,
+            users.login AS user_login,
             users.email AS user_email,
             users.phone AS user_phone,
             rooms.name AS room_name,
@@ -223,7 +233,7 @@ class RequestModel {
     updateStatus(id, status) {
         db.prepare(`UPDATE ${this.table} SET status = ? WHERE id = ?`).run(status, id);
     }
-    create({userId, roomId, dateStart, payment}) {
+    create({ userId, roomId, dateStart, payment }) {
         const r = db.prepare(`
             INSERT INTO ${this.table} (user_id, room_id, date_start, payment) VALUES (?, ?, ?, ?)
             `).run(userId, roomId, dateStart, payment);
